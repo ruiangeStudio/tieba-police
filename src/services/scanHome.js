@@ -6,8 +6,7 @@ import dayjs from 'dayjs';
 import chalk from 'chalk';
 const tiebaName = '九阴'
 const scanUrl = `https://tieba.baidu.com/c/f/frs/wise?sign=092c170a71aa039133e5dccf5fe36281&kw=${tiebaName}&pn=1&is_good=0&cid=&sort_type=0&is_newfrs=1&is_newfeed=1&rn=30&rn_need=10&model=iPhone&scr_w=390&scr_h=844&_client_type=1&_client_version=12.77.0&subapp_type=newwise`;
-const scanUrl1 = `https://tieba.baidu.com/c/f/frs/frsBottom_wise?sign=2eb8aa4f643a2ab5d215f653d3cffc95&kw=${tiebaName}&model=iPhone&scr_w=390&scr_h=844&_client_type=1&_client_version=12.77.0&subapp_type=newwise`
-
+import dotenv from 'dotenv';
 
 import OpenAI from "openai";
 
@@ -137,8 +136,8 @@ const scanTiebaHome = async () =>{
 
 const aiChecksPosts = async (rqContent) =>{
     const openai = new OpenAI({
-        baseURL: 'https://api.deepseek.com',
-        apiKey: 'sk-f8a9a428915c49e6980b2073bfac6ac4'
+        baseURL: process.env.GPT_BASEURL,
+        apiKey: process.env.GPT_API_KEY
     });
 
     try{

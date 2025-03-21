@@ -170,7 +170,7 @@ const aiChecksPosts = async (rqContent) =>{
 // 每10分钟执行一次扫描
 const startScheduledScan = async () => {
     console.log('定时扫描服务已启动');
-    cron.schedule('*/1 * * * *', () => {
+    cron.schedule('*/5 * * * *', () => {
         scanTiebaHome();
     });
 }

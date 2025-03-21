@@ -144,13 +144,11 @@ const aiChecksPosts = async (rqContent) =>{
          console.warn('开始AI核对帖子内容')
          const content = `
        请你判断以下帖子是否违反了百度贴吧的吧规。如果违反了请返回 “违反”和理由，否则返回只“未违反”不用返回理由。 是百度贴吧的 你可以参考以下链接查看：
-       https://tieba.baidu.com/p/6889566343
-       帖子：${rqContent}
-       `
+       https://tieba.baidu.com/p/6889566343`
 
          const completion = await openai.chat.completions.create({
-             messages: [{ role: "system", content: content }],
-             model: "deepseek-chat",
+             messages: [{ role: "system", content: content },{ role: "assistant", content:`铁子:${rqContent}`}],
+             model: process.env.GPT_MODEL,
          });
          console.warn(chalk.blue.green.bold('========BEGIN========='))
          console.warn(rqContent)
@@ -172,7 +170,7 @@ const aiChecksPosts = async (rqContent) =>{
 // 每10分钟执行一次扫描
 const startScheduledScan = async () => {
     console.log('定时扫描服务已启动');
-    cron.schedule('*/10 * * * *', () => {
+    cron.schedule('*/1 * * * *', () => {
         scanTiebaHome();
     });
 }

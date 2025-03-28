@@ -4,6 +4,7 @@ import path from 'path';
 import cron from 'node-cron';
 import dayjs from 'dayjs';
 import chalk from 'chalk';
+
 const tiebaName = '九阴'
 const scanUrl = `https://tieba.baidu.com/c/f/frs/wise?sign=092c170a71aa039133e5dccf5fe36281&kw=${tiebaName}&pn=1&is_good=0&cid=&sort_type=0&is_newfrs=1&is_newfeed=1&rn=30&rn_need=10&model=iPhone&scr_w=390&scr_h=844&_client_type=1&_client_version=12.77.0&subapp_type=newwise`;
 import dotenv from 'dotenv';
@@ -15,7 +16,7 @@ import OpenAI from "openai";
  * @param rqUrl
  * @returns {Promise<*[]>}
  */
- const getTiebaHome = async (rqUrl) => {
+const getTiebaHome = async (rqUrl) => {
     try {
         const response = await axios.get(rqUrl, {
             headers: {
@@ -43,7 +44,7 @@ import OpenAI from "openai";
                     let info = {
                         avatar: '',
                         nickname: '',
-                        title:'',
+                        title: '',
                         desc: '',
                         index,
                         path: `https://tieba.baidu.com/p/${item.feed.log_param[1].value}#/`,
@@ -55,16 +56,16 @@ import OpenAI from "openai";
                             info.avatar = obj.feed_head.image_data.img_url
                             info.nickname = obj.feed_head.main_data[0].text.text
                         }
-                        if(obj.component === 'feed_title'){
+                        if (obj.component === 'feed_title') {
                             info.title = obj.feed_title.data[0].text_info.text
                         }
-                        if(obj.component === 'feed_abstract'){
+                        if (obj.component === 'feed_abstract') {
 
-                           for(let b = 0; b < obj.feed_abstract.data.length; b++){
-                               if( obj.feed_abstract.data[b].type===1){
-                                   info.desc += obj.feed_abstract.data[b].text_info.text
-                               }
-                           }
+                            for (let b = 0; b < obj.feed_abstract.data.length; b++) {
+                                if (obj.feed_abstract.data[b].type === 1) {
+                                    info.desc += obj.feed_abstract.data[b].text_info.text
+                                }
+                            }
                         }
                     }
                     info.merge = `用户【${info.nickname}】发布了帖子：${info.title}_ ${info.desc}`
@@ -88,9 +89,13 @@ import OpenAI from "openai";
         console.log(`数据已保存到: ${fileName}`);
         let offendingAddressList = []
         for (let i = 0; i < savaData.length; i++) {
-            aiChecksPosts(savaData[i].merge).then(res=>{
 
-            }).catch(error=>{
+            // 等待3秒
+            await new Promise(resolve => setTimeout(resolve, 3000));
+
+            aiChecksPosts(savaData[i].merge).then(res => {
+
+            }).catch(error => {
 
             })
             const address = await inspectionData(savaData[i])
@@ -101,7 +106,7 @@ import OpenAI from "openai";
         }
 
         offendingAddressList.forEach(addressPath => {
-            console.warn('发现疑似违规贴，地址：', addressPath)
+            //console.warn('发现疑似违规贴，地址：', addressPath)
         })
         return offendingAddressList
     } catch (error) {
@@ -111,7 +116,7 @@ import OpenAI from "openai";
 }
 
 
-const frequencyClosedWords = ['小猪狗', '出号','收号','出心血','收','关服','脑残','睿智']
+const frequencyClosedWords = ['小猪狗', '出号', '收号', '出心血', '收', '关服', '脑残', '睿智']
 const inspectionData = async (data) => {
     const sentence = data.merge
     // If any forbidden word is found, return the post's path
@@ -120,8 +125,7 @@ const inspectionData = async (data) => {
 }
 
 
-
-const scanTiebaHome = async () =>{
+const scanTiebaHome = async () => {
     try {
         console.log(`开始扫描${tiebaName}贴吧...${dayjs().format('YYYY-MM-DD HH:mm:ss')}`);
         //await getTiebaHome(scanUrl1);
@@ -134,47 +138,46 @@ const scanTiebaHome = async () =>{
 }
 
 
-const aiChecksPosts = async (rqContent) =>{
+const aiChecksPosts = async (rqContent) => {
+
+
+
     const openai = new OpenAI({
         baseURL: process.env.GPT_BASEURL,
         apiKey: process.env.GPT_API_KEY
     });
-
-    try{
-         console.warn('开始AI核对帖子内容')
-         const content = `
-       请你判断以下帖子是否违反了百度贴吧的吧规。如果违反了请返回 “违反”和理由，否则返回只“未违反”不用返回理由。 是百度贴吧的 你可以参考以下链接查看：
-       https://tieba.baidu.com/p/6889566343`
-
-         const completion = await openai.chat.completions.create({
-             messages: [{ role: "system", content: content },{ role: "assistant", content:`铁子:${rqContent}`}],
-             model: process.env.GPT_MODEL,
-         });
-         console.warn(chalk.blue.green.bold('========BEGIN========='))
-         console.warn(rqContent)
-
-        if(completion.choices[0].message.content.includes('未违反')){
+    try {
+        console.warn('开始AI核对帖子内容')
+        const content = `
+        ## 你是一名百度贴吧吧主，你的职责是对贴吧里的违规贴进行标记
+        1.请你判断以下帖子是否违反了百度贴吧的吧规。如果违反了请返回格式：(违反了,理由：xxxxx)，否则返回只“未违反”。你可以参考以下链接查看：https://tieba.baidu.com/p/6889566343
+        2.判断用户名是否和'九阴小诸葛'相似，如果相似，请返回（违反了,理由：名字违规）`
+        const completion = await openai.chat.completions.create({
+            messages: [{role: "system", content: content}, {role: "user", content: `帖子:${rqContent}`}],
+            model: process.env.GPT_MODEL,
+        });
+        console.warn(chalk.blue.green.bold('========BEGIN========='))
+        console.warn(rqContent)
+        if (completion.choices[0].message.content.includes('未违反')) {
             console.log((chalk.blue(completion.choices[0].message.content)))
-        }else{
+        } else {
             console.log((chalk.red(completion.choices[0].message.content)))
         }
-
         console.log(chalk.blue.green.bold('========END========='))
 
-     }catch (e){
-         console.error('AI核对帖子内容出错:', e);
-     }
+    } catch (e) {
+        console.error('AI核对帖子内容出错:', e);
+    }
 }
 
 
 // 每10分钟执行一次扫描
 const startScheduledScan = async () => {
     console.log('定时扫描服务已启动');
-    cron.schedule('*/5 * * * *', () => {
+    cron.schedule('*/1 * * * *', () => {
         scanTiebaHome();
     });
 }
-
 
 
 export default startScheduledScan

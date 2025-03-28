@@ -148,10 +148,7 @@ const aiChecksPosts = async (rqContent,path) => {
     });
     try {
         console.warn('开始AI核对帖子内容',rqContent)
-        const content = `
-        ## 你是一名百度贴吧吧主，你的职责是对贴吧里的违规贴进行标记
-        1.请你判断以下帖子是否违反了百度贴吧的吧规。如果违反了请返回格式：(违反了,理由：xxxxx)，否则返回只“未违反”。你可以参考以下链接查看：https://tieba.baidu.com/p/6889566343
-        2.判断用户名是否和'九阴小诸葛'相似，如果相似，请返回（违反了,理由：名字违规）`
+        const content =  process.env.RULES_CONTENT
         const completion = await openai.chat.completions.create({
             messages: [{role: "system", content: content}, {role: "user", content: `帖子:${rqContent}`}],
             model: process.env.GPT_MODEL,

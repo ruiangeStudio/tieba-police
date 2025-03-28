@@ -36,7 +36,9 @@ const getTiebaHome = async (rqUrl) => {
         const fileName = `data_${timestamp}.json`;
 
 
-        let savaData = []
+        let savaData = [
+
+        ]
 
         response.data.page_data.feed_list.forEach((item, index) => {
             try {
@@ -93,7 +95,7 @@ const getTiebaHome = async (rqUrl) => {
             // 等待3秒
             await new Promise(resolve => setTimeout(resolve, 3000));
 
-            aiChecksPosts(savaData[i].merge).then(res => {
+            aiChecksPosts(savaData[i].merge,savaData[i].path).then(res => {
 
             }).catch(error => {
 
@@ -138,16 +140,14 @@ const scanTiebaHome = async () => {
 }
 
 
-const aiChecksPosts = async (rqContent) => {
-
-
-
+const aiChecksPosts = async (rqContent,path) => {
+    console.warn(chalk.blue.green.bold('========BEGIN========='))
     const openai = new OpenAI({
         baseURL: process.env.GPT_BASEURL,
         apiKey: process.env.GPT_API_KEY
     });
     try {
-        console.warn('开始AI核对帖子内容')
+        console.warn('开始AI核对帖子内容',rqContent)
         const content = `
         ## 你是一名百度贴吧吧主，你的职责是对贴吧里的违规贴进行标记
         1.请你判断以下帖子是否违反了百度贴吧的吧规。如果违反了请返回格式：(违反了,理由：xxxxx)，否则返回只“未违反”。你可以参考以下链接查看：https://tieba.baidu.com/p/6889566343
@@ -156,12 +156,12 @@ const aiChecksPosts = async (rqContent) => {
             messages: [{role: "system", content: content}, {role: "user", content: `帖子:${rqContent}`}],
             model: process.env.GPT_MODEL,
         });
-        console.warn(chalk.blue.green.bold('========BEGIN========='))
-        console.warn(rqContent)
+
         if (completion.choices[0].message.content.includes('未违反')) {
             console.log((chalk.blue(completion.choices[0].message.content)))
         } else {
             console.log((chalk.red(completion.choices[0].message.content)))
+            console.log(`地址：${path}`)
         }
         console.log(chalk.blue.green.bold('========END========='))
 
